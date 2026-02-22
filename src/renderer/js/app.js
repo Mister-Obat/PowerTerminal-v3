@@ -341,7 +341,6 @@ async function addTerminal(cwd) {
         fontSize: 14,
         theme: { background: '#000000', foreground: '#e2e8f0', cursor: '#6366f1' },
         allowTransparency: false,
-        copyOnSelect: true,
     });
 
     const fitAddon = new FitAddon();
@@ -827,6 +826,7 @@ async function init() {
         const selection = active.xterm.getSelection();
         if (selection) {
             window.api.copyToClipboard(selection);
+            active.xterm.clearSelection();
         } else {
             window.api.sendInput(active.ptyId, '\u0003');
         }
