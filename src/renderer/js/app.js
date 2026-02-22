@@ -352,11 +352,12 @@ async function addTerminal(cwd) {
 
     term.onData(data => window.api.sendInput(ptyId, data));
 
-    // Cache la sélection via onSelectionChange car attachCustomKeyEventHandler
-    // peut recevoir l'événement après qu'xterm a déjà effacé la sélection
+    // Cache la sélection — on ne l'efface que manuellement (pas sur onSelectionChange vide)
+    // car xterm peut effacer la sélection avant que attachCustomKeyEventHandler soit appelé
     let lastSelection = '';
     term.onSelectionChange(() => {
-        lastSelection = term.getSelection();
+        const sel = term.getSelection();
+        if (sel) lastSelection = sel;
     });
 
     term.attachCustomKeyEventHandler((e) => {
@@ -368,8 +369,10 @@ async function addTerminal(cwd) {
                 focused.isContentEditable
             );
             if (isEditableField) return true;
-            if (lastSelection) {
-                window.api.copyToClipboard(lastSelection);
+            // Tenter getSelection() d'abord, fallback sur le cache
+            const selection = term.getSelection() || lastSelection;
+            if (selection) {
+                window.api.copyToClipboard(selection);
                 lastSelection = '';
                 term.clearSelection();
                 return false; // copié, ne pas envoyer \u0003
