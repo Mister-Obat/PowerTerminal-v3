@@ -472,6 +472,10 @@ function removeActiveTerminal() {
     if (index === -1) return;
 
     const term = state.terminals[index];
+    const projectTerminalIds = state.terminals
+        .filter(t => t.projectId === term.projectId)
+        .map(t => t.id);
+    const removedProjectIndex = projectTerminalIds.indexOf(term.id);
     
     // Cleanup
     window.api.destroyTerminal(term.ptyId);
@@ -483,10 +487,12 @@ function removeActiveTerminal() {
     renderProjectLists();
     renderSidebarFavorites();
     
-    // Switch to another terminal
-    const nextTerminal = state.terminals[index] || state.terminals[index - 1];
-    if (nextTerminal) {
-        switchTerminal(nextTerminal.id);
+    // Keep focus in the same project: previous tab first, otherwise next.
+    const projectTerminals = state.terminals.filter(t => t.projectId === term.projectId);
+    if (projectTerminals.length) {
+        const fallbackIndex = removedProjectIndex > 0 ? removedProjectIndex - 1 : 0;
+        const fallback = projectTerminals[Math.min(fallbackIndex, projectTerminals.length - 1)];
+        switchTerminal(fallback.id);
     } else {
         state.activeTerminalId = null;
         renderTabs();
