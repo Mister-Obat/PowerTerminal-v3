@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('api', {
   onTerminalExit: (callback) => ipcRenderer.on('terminal:exit', (event, data) => callback(data)),
   resizeTerminal: (ptyId, cols, rows) => ipcRenderer.send('terminal:resize', { ptyId, cols, rows }),
   destroyTerminal: (ptyId) => ipcRenderer.send('terminal:destroy', { ptyId }),
+  terminalExists: (ptyId) => ipcRenderer.invoke('terminal:exists', { ptyId }),
 
   // Config
   getConfig: () => ipcRenderer.invoke('config:get'),

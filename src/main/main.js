@@ -325,6 +325,11 @@ ipcMain.handle('terminal:create', (event, { cwd }) => {
   return ptyId;
 });
 
+ipcMain.handle('terminal:exists', (event, { ptyId }) => {
+  if (!ptyId) return false;
+  return terminals.has(String(ptyId));
+});
+
 // IPC Handler: Destroy Terminal
 ipcMain.on('terminal:destroy', (event, { ptyId }) => {
   const ptyProcess = terminals.get(ptyId);

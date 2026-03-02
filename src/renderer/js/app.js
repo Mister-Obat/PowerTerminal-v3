@@ -325,18 +325,39 @@ function deleteCommand() {
 }
 
 async function launchCommand(command) {
-    let active = state.terminals.find(t => t.id === state.activeTerminalId);
+    let active = state.terminals.find(
+        t => t.id === state.activeTerminalId && t.projectId === state.activeProjectId
+    );
 
-    if (!active) {
-        const projectTerminals = state.terminals.filter(t => t.projectId === state.activeProjectId);
-        if (projectTerminals.length > 0) {
-            const fallback = projectTerminals[projectTerminals.length - 1];
-            switchTerminal(fallback.id);
-            active = fallback;
-        } else if (state.activeProjectRoot) {
-            await addTerminal(state.activeProjectRoot);
-            active = state.terminals.find(t => t.id === state.activeTerminalId);
+    const projectTerminals = state.terminals.filter(t => t.projectId === state.activeProjectId);
+    if (!active && projectTerminals.length > 0) {
+        const fallback = projectTerminals[projectTerminals.length - 1];
+        switchTerminal(fallback.id);
+        active = fallback;
+    }
+
+    if (active) {
+        const exists = await window.api.terminalExists(active.ptyId);
+        if (!exists) {
+            const staleIndex = state.terminals.findIndex(t => t.id === active.id);
+            if (staleIndex !== -1) {
+                const stale = state.terminals[staleIndex];
+                stale.xterm.dispose();
+                stale.container.remove();
+                state.terminals.splice(staleIndex, 1);
+                if (state.activeTerminalId === stale.id) {
+                    state.activeTerminalId = null;
+                }
+                renderTabs();
+                renderSidebarFavorites();
+            }
+            active = null;
         }
+    }
+
+    if (!active && state.activeProjectRoot) {
+        await addTerminal(state.activeProjectRoot);
+        active = state.terminals.find(t => t.id === state.activeTerminalId);
     }
 
     if (active) {
